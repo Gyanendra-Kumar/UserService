@@ -7,10 +7,12 @@ import com.learning.userservice.models.User;
 import com.learning.userservice.repositories.TokenRepository;
 import com.learning.userservice.repositories.UserRepository;
 
+import io.jsonwebtoken.Jwts;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Optional;
@@ -48,7 +50,7 @@ public class UserServiceImpl implements  UserService{
     }
 
     @Override
-    public Token login(String email, String password) throws PasswordMismatchException {
+    public String login(String email, String password) throws PasswordMismatchException {
         Optional<User> optionalUser = userRepository.findByEmail(email);
 
         if(optionalUser.isEmpty()){
@@ -62,18 +64,32 @@ public class UserServiceImpl implements  UserService{
         }
 
         // login successful
-        Token token = new Token();
-        token.setUser(user);
-        token.setTokenValue(RandomStringUtils.randomAlphanumeric(128));
+//        Manual token generation
+//        Token token = new Token();
+//        token.setUser(user);
+//        token.setTokenValue(RandomStringUtils.randomAlphanumeric(128));
+//
+//        Calendar calendar = Calendar.getInstance();
+//        calendar.add(Calendar.DAY_OF_YEAR, 30);
+//        Date expiryDate = calendar.getTime();
+//
+//        token.setExpiryAt(expiryDate);
 
-        Calendar calendar = Calendar.getInstance();
-        calendar.add(Calendar.DAY_OF_YEAR, 30);
-        Date expiryDate = calendar.getTime();
+//        return tokenRepository.save(token);
 
-        token.setExpiryAt(expiryDate);
+        // GENERATE A JSON TOKEN USING JJWT LIBRARY
 
-        return tokenRepository.save(token);
-    }
+    String payload =  "{\n" +
+            "                \"email\": \"gm1@gmail.com\", \n" +
+            "                \"userId\": 101,\n" +
+            "                \"roles\": \"USER\",\n" +
+            "                \"expiry\": \"2026-11-03T11:19:59.794Z\"\n" +
+            "}";
+
+        byte[] payloadBytes = payload.getBytes(StandardCharsets.UTF_8);
+        String token = Jwts.builder().content(payloadBytes).compact();
+        return token;
+    };
 
     @Override
     public User validateToken(String tokenValue) throws InvalidTokeException {
